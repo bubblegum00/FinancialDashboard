@@ -4,6 +4,7 @@ import yfinance as yf
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+import cufflinks as cf
 
 
 def get_info():
@@ -19,12 +20,12 @@ def create_chart(data,chart_type):
         fig.update_yaxes(showspikes=True, spikemode="across", title=None)
         # return fig
     elif chart_type=='candle':
-        fig = go.Figure(data=[go.Candlestick(x = data.index,open=data['Open'],low=data['Low'],high=data['Close'])])
-        fig.show()
-        # fig.update_layout(xaxis_rangeslider_visible=False)
-        # fig.update_layout(hovermode="x")
-        # fig.update_xaxes(showspikes=True, spikemode="across", title=None)
-        # fig.update_yaxes(showspikes=True, spikemode="across", title=None)
+        qf = cf.QuantFig(data, name=st.session_state.ticker)
+        qf.add_volume()
+        fig = qf.iplot(asFigure=True, up_color="green", down_color="red")
+        fig.update_layout(hovermode="x")
+        fig.update_xaxes(showspikes=True, spikemode="across", title=None)
+        fig.update_yaxes(showspikes=True, spikemode="across", title=None)
     return fig
 
 def get_histoy(period="1mo", interval="1d", start=None, end=None):
@@ -44,6 +45,7 @@ def get_histoy(period="1mo", interval="1d", start=None, end=None):
 
 
 if __name__ == '__main__':
+    # cf.go_offline() 
     st.set_page_config(layout="wide")
 
     if "ticker" not in st.session_state:
@@ -104,7 +106,6 @@ if __name__ == '__main__':
         st.plotly_chart(fig, use_container_width=True)
     with tab_1y:
         data = get_histoy(period="1y", interval=st.session_state.interval)
-        st.dataframe(data)
         fig = create_chart(data, st.session_state.chart_type)
         st.plotly_chart(fig, use_container_width=True)
     with tab_3y:
