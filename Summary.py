@@ -10,12 +10,11 @@ def get_info():
     st.session_state['info'] = yf.Ticker(st.session_state.ticker).info
 
 
-@st.cache
 def get_histoy(period, interval):
     return yf.Ticker(st.session_state.ticker).history(period, interval)
 
 
-def format_info_table(content):
+def format_table(content):
     df = pd.Series(content).reset_index()
     s = df.style.set_properties(subset=[0], **{'font-weight': 'bold', 'text-align': 'right'})
     s = s.hide_index().hide_columns()
@@ -45,25 +44,42 @@ def create_chart(data):
 
 
 def run():
+    ## Page config
     st.set_page_config(layout="wide")
 
+    ####################################################### Ticker #######################################################
+    ## Set ticker value in session state to persist
     if "ticker" not in st.session_state:
         st.session_state.ticker = "MSFT"
     else:
         st.session_state.ticker = st.session_state.ticker
 
-    ############################################ Reference fin_dashboard01.py ############################################
+    ## Store stock info in session state to persist
+    if "info" not in st.session_state:
+        get_info()
+    else:
+        st.session_state.info = st.session_state.info
+    
+    ################ Reference fin_dashboard01.py ################
     # Get the list of stock tickers from S&P500
     ticker_list = pd.read_html('https://en.wikipedia.org/wiki/List_of_S%26P_500_companies')[0]['Symbol']
 
     # Add the ticker selection on the sidebar
-    ticker_val = st.sidebar.selectbox(label="Select a ticker", options=ticker_list,key='ticker')
-    get_info()
+    st.sidebar.selectbox(label="Select a ticker", options=ticker_list,key='ticker', on_change=get_info)
+    ##############################################################
     #######################################################################################################################
     
     ## Title
-    st.header(f"{st.session_state.info['longName']} ({st.session_state.ticker})")
-    st.caption(f"Currency in {st.session_state.info['currency']}")
+    st.markdown(f"<p style='font-size:50px; font-weight:bold; margin-bottom:-20px'>{st.session_state.info['longName']} ({st.session_state.ticker})</p><span style='font-size:15px; color:grey'>Currency in {st.session_state.info['currency']}</span>",unsafe_allow_html=True)
+    
+    ## Metric - Current Price andchange from last close
+    st.markdown("""
+    <style>
+    [data-testid=stMetricLabel]{
+        font-size:20px;
+    }
+    </style>
+    """,unsafe_allow_html=True)
     st.metric(label="Current Price", value=st.session_state.info['currentPrice'], delta=round(st.session_state.info['currentPrice']-st.session_state.info['previousClose'], 2))
 
     col_info1, col_info2, col_chart = st.columns([1,1,2], gap="medium")
@@ -84,16 +100,16 @@ def run():
         "PE Ratio (TTM)": st.session_state.info['trailingPE'],
         "EPS (TTM)": st.session_state.info['trailingEps'],
         "Earnings Date": "a",
-        "Forward Dividend & Yield": f"{st.session_state.info['dividendRate'] if st.session_state.info['dividendRate'] else 'N/A'} ({str(st.session_state.info['dividendYield'])+'%' if st.session_state.info['dividendYield'] else 'N/A'})",
-        "exDividendDate": pd.to_datetime(st.session_state.info['exDividendDate']).strftime("%b %d, %Y") if st.session_state.info['exDividendDate'] else "N/A",
-        "1y Target EST": 'a'
+        "Forward Dividend & Yield": f"{st.session_state.info.get('dividendRate', 'N/A')} ({str(st.session_state.info['dividendYield'])+'%' if st.session_state.info['dividendYield'] else 'N/A'})",
+        "exDividendDate": pd.to_datetime(st.session_state.info['exDividendDate'], unit='s', origin='unix').strftime("%b %d, %Y") if st.session_state.info['exDividendDate'] else "N/A",
+        "1y Target EST": st.session_state.info['targetMeanPrice']
     }
 
     ## Display table w/o index/column header - https://stackoverflow.com/questions/69875734/how-to-hide-dataframe-index-on-streamlit
     with col_info1:
-        st.write(format_info_table(col_info1_content), unsafe_allow_html=True)
+        st.write(format_table(col_info1_content), unsafe_allow_html=True)
     with col_info2:
-        st.write(format_info_table(col_info2_content), unsafe_allow_html=True)
+        st.write(format_table(col_info2_content), unsafe_allow_html=True)
     with col_chart:
         tab_1m, tab_6m, tab_ytd, tab_1y, tab_5y, tab_max = st.tabs(["1M", "6M", "YTD", "1Y", "5Y", "MAX"])
         with tab_1m:

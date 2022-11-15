@@ -45,31 +45,29 @@ def get_histoy(period="1mo", interval="1d", start=None, end=None):
 
 
 if __name__ == '__main__':
-    # cf.go_offline() 
+    ## Page config
     st.set_page_config(layout="wide")
 
+    ####################################################### Ticker #######################################################
+    ## Set ticker value in session state to persist
     if "ticker" not in st.session_state:
         st.session_state.ticker = "MSFT"
     else:
         st.session_state.ticker = st.session_state.ticker
 
-    if "interval" not in st.session_state:
-        st.session_state.interval = "1 Day"
+    ## Store stock info in session state to persist
+    if "info" not in st.session_state:
+        get_info()
     else:
-        st.session_state.interval=st.session_state.interval
+        st.session_state.info = st.session_state.info
     
-    if "chart_type" not in st.session_state:
-        st.session_state.chart_type = "line"
-    else:
-        st.session_state.chart_type=st.session_state.chart_type
-
-    ############################################ Reference fin_dashboard01.py ############################################
+    ################ Reference fin_dashboard01.py ################
     # Get the list of stock tickers from S&P500
     ticker_list = pd.read_html('https://en.wikipedia.org/wiki/List_of_S%26P_500_companies')[0]['Symbol']
 
     # Add the ticker selection on the sidebar
-    ticker_val = st.sidebar.selectbox(label="Select a ticker", options=ticker_list,key='ticker')
-    get_info()
+    st.sidebar.selectbox(label="Select a ticker", options=ticker_list,key='ticker', on_change=get_info)
+    ##############################################################
     #######################################################################################################################
 
     st.write(st.session_state['ticker'])
