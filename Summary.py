@@ -6,12 +6,12 @@ import streamlit as st
 import yfinance as yf
 
 
-def get_info():
-    st.session_state['info'] = yf.Ticker(st.session_state.ticker).info
+def initialize_ticker_obj():
+    st.session_state['ticker_obj'] = yf.Ticker(st.session_state.ticker)
 
 
 def get_histoy(period, interval):
-    return yf.Ticker(st.session_state.ticker).history(period, interval)
+    return st.session_state.ticker_obj.history(period, interval)
 
 
 def format_table(content):
@@ -55,22 +55,22 @@ def run():
         st.session_state.ticker = st.session_state.ticker
 
     ## Store stock info in session state to persist
-    if "info" not in st.session_state:
-        get_info()
+    if "ticker_obj" not in st.session_state:
+        initialize_ticker_obj()
     else:
-        st.session_state.info = st.session_state.info
+        st.session_state.ticker_obj = st.session_state.ticker_obj
     
     ################ Reference fin_dashboard01.py ################
     # Get the list of stock tickers from S&P500
     ticker_list = pd.read_html('https://en.wikipedia.org/wiki/List_of_S%26P_500_companies')[0]['Symbol']
 
     # Add the ticker selection on the sidebar
-    st.sidebar.selectbox(label="Select a ticker", options=ticker_list,key='ticker', on_change=get_info)
+    st.sidebar.selectbox(label="Select a ticker", options=ticker_list,key='ticker', on_change=initialize_ticker_obj)
     ##############################################################
     #######################################################################################################################
     
     ## Title
-    st.markdown(f"<p style='font-size:50px; font-weight:bold; margin-bottom:-20px'>{st.session_state.info['longName']} ({st.session_state.ticker})</p><span style='font-size:15px; color:grey'>Currency in {st.session_state.info['currency']}</span>",unsafe_allow_html=True)
+    st.markdown(f"<p style='font-size:50px; font-weight:bold; margin-bottom:-20px'>{st.session_state.ticker_obj.info['longName']} ({st.session_state.ticker})</p><span style='font-size:15px; color:grey'>Currency in {st.session_state.ticker_obj.info['currency']}</span>",unsafe_allow_html=True)
     
     ## Metric - Current Price andchange from last close
     st.markdown("""
@@ -80,29 +80,29 @@ def run():
     }
     </style>
     """,unsafe_allow_html=True)
-    st.metric(label="Current Price", value=st.session_state.info['currentPrice'], delta=round(st.session_state.info['currentPrice']-st.session_state.info['previousClose'], 2))
+    st.metric(label="Current Price", value=st.session_state.ticker_obj.info['currentPrice'], delta=round(st.session_state.ticker_obj.info['currentPrice']-st.session_state.ticker_obj.info['previousClose'], 2))
 
     col_info1, col_info2, col_chart = st.columns([1,1,2], gap="medium")
 
-    col_info1_content = {"Previous Close": st.session_state.info['previousClose'],
-        "Open": st.session_state.info['open'],
-        "Bid": f"{st.session_state.info['bid']} x {st.session_state.info['bidSize']}",
-        "Ask": f"{st.session_state.info['ask']} x {st.session_state.info['askSize']}",
-        "Days's Range": f"{st.session_state.info['dayLow']} - {st.session_state.info['dayHigh']}",
-        "52 Week Range": f"{st.session_state.info['fiftyTwoWeekLow']} - {st.session_state.info['fiftyTwoWeekHigh']}",
-        "Volume": f"{st.session_state.info['volume']:,}",
-        "Average Volume": f"{st.session_state.info['averageVolume']:,}"
+    col_info1_content = {"Previous Close": st.session_state.ticker_obj.info['previousClose'],
+        "Open": st.session_state.ticker_obj.info['open'],
+        "Bid": f"{st.session_state.ticker_obj.info['bid']} x {st.session_state.ticker_obj.info['bidSize']}",
+        "Ask": f"{st.session_state.ticker_obj.info['ask']} x {st.session_state.ticker_obj.info['askSize']}",
+        "Days's Range": f"{st.session_state.ticker_obj.info['dayLow']} - {st.session_state.ticker_obj.info['dayHigh']}",
+        "52 Week Range": f"{st.session_state.ticker_obj.info['fiftyTwoWeekLow']} - {st.session_state.ticker_obj.info['fiftyTwoWeekHigh']}",
+        "Volume": f"{st.session_state.ticker_obj.info['volume']:,}",
+        "Average Volume": f"{st.session_state.ticker_obj.info['averageVolume']:,}"
     }
 
     col_info2_content = {
-        "Market Cap": human_format(st.session_state.info['marketCap']),
-        "Beta": st.session_state.info['beta'],
-        "PE Ratio (TTM)": st.session_state.info['trailingPE'],
-        "EPS (TTM)": st.session_state.info['trailingEps'],
+        "Market Cap": human_format(st.session_state.ticker_obj.info['marketCap']),
+        "Beta": st.session_state.ticker_obj.info['beta'],
+        "PE Ratio (TTM)": st.session_state.ticker_obj.info['trailingPE'],
+        "EPS (TTM)": st.session_state.ticker_obj.info['trailingEps'],
         "Earnings Date": "a",
-        "Forward Dividend & Yield": f"{st.session_state.info.get('dividendRate', 'N/A')} ({str(st.session_state.info['dividendYield'])+'%' if st.session_state.info['dividendYield'] else 'N/A'})",
-        "exDividendDate": pd.to_datetime(st.session_state.info['exDividendDate'], unit='s', origin='unix').strftime("%b %d, %Y") if st.session_state.info['exDividendDate'] else "N/A",
-        "1y Target EST": st.session_state.info['targetMeanPrice']
+        "Forward Dividend & Yield": f"{st.session_state.ticker_obj.info.get('dividendRate', 'N/A')} ({str(st.session_state.ticker_obj.info['dividendYield'])+'%' if st.session_state.ticker_obj.info['dividendYield'] else 'N/A'})",
+        "exDividendDate": pd.to_datetime(st.session_state.ticker_obj.info['exDividendDate'], unit='s', origin='unix').strftime("%b %d, %Y") if st.session_state.ticker_obj.info['exDividendDate'] else "N/A",
+        "1y Target EST": st.session_state.ticker_obj.info['targetMeanPrice']
     }
 
     ## Display table w/o index/column header - https://stackoverflow.com/questions/69875734/how-to-hide-dataframe-index-on-streamlit

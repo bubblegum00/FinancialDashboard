@@ -7,8 +7,8 @@ import plotly.graph_objects as go
 import cufflinks as cf
 
 
-def get_info():
-    st.session_state['info'] = yf.Ticker(st.session_state.ticker).info
+def initialize_ticker_obj():
+    st.session_state['ticker_obj'] = yf.Ticker(st.session_state.ticker)
 
 
 def create_chart(data,chart_type):
@@ -41,7 +41,7 @@ def get_histoy(period="1mo", interval="1d", start=None, end=None):
         interval = "3mo"
     else:
         interval = "1d"
-    return yf.Ticker(st.session_state.ticker).history(period, interval,start,end)
+    return st.session_state.ticker_obj.history(period, interval,start,end)
 
 
 if __name__ == '__main__':
@@ -56,21 +56,21 @@ if __name__ == '__main__':
         st.session_state.ticker = st.session_state.ticker
 
     ## Store stock info in session state to persist
-    if "info" not in st.session_state:
-        get_info()
+    if "ticker_obj" not in st.session_state:
+        initialize_ticker_obj()
     else:
-        st.session_state.info = st.session_state.info
+        st.session_state.ticker_obj = st.session_state.ticker_obj
     
     ################ Reference fin_dashboard01.py ################
     # Get the list of stock tickers from S&P500
     ticker_list = pd.read_html('https://en.wikipedia.org/wiki/List_of_S%26P_500_companies')[0]['Symbol']
 
     # Add the ticker selection on the sidebar
-    st.sidebar.selectbox(label="Select a ticker", options=ticker_list,key='ticker', on_change=get_info)
+    st.sidebar.selectbox(label="Select a ticker", options=ticker_list,key='ticker', on_change=initialize_ticker_obj)
     ##############################################################
     #######################################################################################################################
 
-    st.write(st.session_state['ticker'])
+    st.header(st.session_state.ticker_obj.info['longName'])
     
     col_interval, col_chart_type = st.columns(2)
     
