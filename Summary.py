@@ -99,7 +99,7 @@ def run():
         "Beta": st.session_state.ticker_obj.info['beta'],
         "PE Ratio (TTM)": st.session_state.ticker_obj.info['trailingPE'],
         "EPS (TTM)": st.session_state.ticker_obj.info['trailingEps'],
-        "Earnings Date": "a",
+        "Earnings Date": ' - '.join(st.session_state.ticker_obj.calendar.loc['Earnings Date'].map(lambda x: x.date().strftime('%b %d, %Y')).to_list()) if st.session_state.ticker_obj.calendar.loc['Earnings Date'].any() else 'N/A',
         "Forward Dividend & Yield": f"{st.session_state.ticker_obj.info.get('dividendRate', 'N/A')} ({str(st.session_state.ticker_obj.info['dividendYield'])+'%' if st.session_state.ticker_obj.info['dividendYield'] else 'N/A'})",
         "exDividendDate": pd.to_datetime(st.session_state.ticker_obj.info['exDividendDate'], unit='s', origin='unix').strftime("%b %d, %Y") if st.session_state.ticker_obj.info['exDividendDate'] else "N/A",
         "1y Target EST": st.session_state.ticker_obj.info['targetMeanPrice']

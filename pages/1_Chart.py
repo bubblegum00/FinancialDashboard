@@ -4,6 +4,7 @@ import yfinance as yf
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 import cufflinks as cf
 
 
@@ -11,21 +12,38 @@ def initialize_ticker_obj():
     st.session_state['ticker_obj'] = yf.Ticker(st.session_state.ticker)
 
 
-def create_chart(data,chart_type):
+def create_chart(data,chart_type,up_color="green",down_color="red"):
+    ###################### From cufflinks ######################
     if chart_type=='line':
-        fig = px.area(data, x=data.index, y="Close")
-        fig.update_traces(hovertemplate=None)
-        fig.update_layout(hovermode="x")
+        bar_colors=[]
+        base = data['Volume']
+        for i in range(len(base)):
+            if i != 0:
+                if base[i] > base[i-1]:
+                    bar_colors.append(up_color)
+                else:
+                    bar_colors.append(down_color)
+            else:
+                bar_colors.append(down_color)
+    ############################################################
+
+        fig = make_subplots(specs=[[{"secondary_y": True}]])
+        fig.add_trace(go.Line(x=data.index, y=data['Close'], fill='tozeroy', name='close', hovertemplate=None))
+        fig.add_trace(go.Bar(x=data.index, y=data['Volume'], name='volume', hovertemplate=None), secondary_y=True)
+        fig['data'][1].update(marker=dict(color=bar_colors), opacity=0.8)
+        fig.update_layout(hovermode="x", height=600)
         fig.update_xaxes(showspikes=True, spikemode="across", title=None)
-        fig.update_yaxes(showspikes=True, spikemode="across", title=None)
-        # return fig
+        fig.update_yaxes(showspikes=True, spikemode="across", title=None, row=1, col=1)
+        fig.update_yaxes(range=[0, data['Volume'].max()*3], showspikes=True, spikemode="across", title=None, showticklabels=False, secondary_y=True)
+        
     elif chart_type=='candle':
-        qf = cf.QuantFig(data, name=st.session_state.ticker)
+        qf = cf.QuantFig(data, name=st.session_state.ticker,kind='candlestick')
         qf.add_volume()
-        fig = qf.iplot(asFigure=True, up_color="green", down_color="red")
+        fig = qf.iplot(asFigure=True, up_color=up_color, down_color=down_color)
         fig.update_layout(hovermode="x")
         fig.update_xaxes(showspikes=True, spikemode="across", title=None)
         fig.update_yaxes(showspikes=True, spikemode="across", title=None)
+    
     return fig
 
 def get_histoy(period="1mo", interval="1d", start=None, end=None):
@@ -41,7 +59,7 @@ def get_histoy(period="1mo", interval="1d", start=None, end=None):
         interval = "3mo"
     else:
         interval = "1d"
-    return st.session_state.ticker_obj.history(period, interval,start,end)
+    return st.session_state.ticker_obj.history(period,interval,start,end)
 
 
 if __name__ == '__main__':
