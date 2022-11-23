@@ -1,6 +1,4 @@
 ## Import Modules
-from datetime import datetime, timedelta
-
 import pandas as pd
 import plotly.express as px
 import streamlit as st
@@ -72,7 +70,7 @@ def run():
     st.set_page_config(layout="wide")
 
     ############################################# Ticker #############################################
-    ## Set ticker value in session state to persist
+    ## Set ticker value in session state to persist. Default 'MSFT'
     if "ticker" not in st.session_state:
         st.session_state.ticker = "MSFT"
     else:
@@ -103,7 +101,6 @@ def run():
     <span style='font-size:15px; color:grey'>
         Currency in {st.session_state.ticker_obj.info['currency']}
     </span>
-
     """
     st.markdown(title_str,unsafe_allow_html=True)
     ####################################################################################################
@@ -130,8 +127,8 @@ def run():
     col_info1, col_info2, col_chart = st.columns([1,1,2], gap="medium")
 
     ######################## Data Column 1 ########################
-    col_info1_content = {"Previous Close": st.session_state.ticker_obj.info['previousClose'],
-        "Open": st.session_state.ticker_obj.info['open'],
+    col_info1_content = {"Previous Close": f"{round(st.session_state.ticker_obj.info['previousClose'], 2) if st.session_state.ticker_obj.info['previousClose'] else 'N/A'}",
+        "Open": f"{round(st.session_state.ticker_obj.info['open'], 2) if st.session_state.ticker_obj.info['open'] else 'N/A'}",
         "Bid": f"{st.session_state.ticker_obj.info['bid']} x {st.session_state.ticker_obj.info['bidSize']}",
         "Ask": f"{st.session_state.ticker_obj.info['ask']} x {st.session_state.ticker_obj.info['askSize']}",
         "Days's Range": f"{st.session_state.ticker_obj.info['dayLow']} - {st.session_state.ticker_obj.info['dayHigh']}",
@@ -147,13 +144,13 @@ def run():
     ######################## Data Column 2 ########################
     col_info2_content = {
         "Market Cap": human_format(st.session_state.ticker_obj.info['marketCap']),
-        "Beta": st.session_state.ticker_obj.info['beta'],
-        "PE Ratio (TTM)": st.session_state.ticker_obj.info['trailingPE'],
-        "EPS (TTM)": st.session_state.ticker_obj.info['trailingEps'],
+        "Beta": f"{round(st.session_state.ticker_obj.info['beta'], 2) if st.session_state.ticker_obj.info['beta'] else 'N/A'}",
+        "PE Ratio (TTM)": f"{round(st.session_state.ticker_obj.info['trailingPE'], 2) if st.session_state.ticker_obj.info['trailingPE'] else 'N/A'}",
+        "EPS (TTM)": f"{round(st.session_state.ticker_obj.info['trailingEps'], 2) if st.session_state.ticker_obj.info['trailingEps'] else 'N/A'}",
         "Earnings Date": ' - '.join(st.session_state.ticker_obj.calendar.loc['Earnings Date'].map(lambda x: x.date().strftime('%b %d, %Y')).to_list()) if st.session_state.ticker_obj.calendar.loc['Earnings Date'].any() else 'N/A',
-        "Forward Dividend & Yield": f"{st.session_state.ticker_obj.info.get('dividendRate', 'N/A')} ({str(st.session_state.ticker_obj.info['dividendYield'])+'%' if st.session_state.ticker_obj.info['dividendYield'] else 'N/A'})",
+        "Forward Dividend & Yield": f"{st.session_state.ticker_obj.info.get('dividendRate', 'N/A')} ({str(round(st.session_state.ticker_obj.info['dividendYield']*100, 2))+'%' if st.session_state.ticker_obj.info['dividendYield'] else 'N/A'})",
         "exDividendDate": pd.to_datetime(st.session_state.ticker_obj.info['exDividendDate'], unit='s', origin='unix').strftime("%b %d, %Y") if st.session_state.ticker_obj.info['exDividendDate'] else "N/A",
-        "1y Target EST": st.session_state.ticker_obj.info['targetMeanPrice']
+        "1y Target EST": f"{round(st.session_state.ticker_obj.info['targetMeanPrice'], 2) if st.session_state.ticker_obj.info['targetMeanPrice'] else 'N/A'}"
     }
     with col_info2:
         st.write(format_table(col_info2_content), unsafe_allow_html=True)

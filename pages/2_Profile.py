@@ -90,23 +90,32 @@ if __name__ == '__main__':
     ## Distribution of shares
     st.subheader("Share Distribution")
     df = st.session_state.ticker_obj.major_holders
-    s = df.style.set_properties(subset=[1], **{'font-weight': 'bold', 'text-align': 'right'})
-    s = s.hide_index().hide_columns()
-    st.write(s.to_html(), unsafe_allow_html=True)
+    if df is not None:
+        s = df.style.set_properties(subset=[1], **{'font-weight': 'bold', 'text-align': 'right'})
+        s = s.hide_index().hide_columns()
+        st.write(s.to_html(), unsafe_allow_html=True)
+    else:
+        st.write('Data not available..')
     st.markdown('')
-
     ## List of Institutional Holders
     st.subheader("Institutional Holders")
     df = st.session_state.ticker_obj.institutional_holders
-    s = df.style.set_properties(subset=['Holder', '% Out'], **{'font-weight': 'bold', 'text-align': 'right'})
-    s = s.hide_index()
-    st.write(s.to_html(), unsafe_allow_html=True)
+    if df is not None:
+        s = df.style.set_properties(subset=['Holder', '% Out'], **{'font-weight': 'bold', 'text-align': 'right'})
+        s = s.hide_index()
+        st.write(s.to_html(), unsafe_allow_html=True)
+    else:
+        st.write('Data not available..')
     st.markdown('')
 
     ## List of Mutual Fund Holders
     st.subheader("Mutual Fund Holders")
     df = st.session_state.ticker_obj.mutualfund_holders
-    s = df.style.set_properties(subset=['Holder', '% Out'], **{'font-weight': 'bold', 'text-align': 'right'})
-    s = s.hide_index()
-    st.write(s.to_html(), unsafe_allow_html=True)
+    if df is not None:
+        s = df.style.set_properties(subset=['Holder', '% Out'], **{'font-weight': 'bold', 'text-align': 'right'})
+        s = s.hide_index()
+        st.write(s.to_html(), unsafe_allow_html=True)
+    else:
+        st.write('Data not available..')
+    
     #######################################################################################################################
