@@ -1,9 +1,14 @@
+import pandas as pd
 import streamlit as st
 import yfinance as yf
-import pandas as pd
 
 
 def initialize_ticker_obj():
+    """
+    Store the yfinance ticker object for the selected ticker
+    in session state to reduce API hits and persist ticker
+    selection across pages
+    """
     st.session_state['ticker_obj'] = yf.Ticker(st.session_state.ticker)
 
 
@@ -12,7 +17,7 @@ if __name__ == '__main__':
     st.set_page_config(layout="wide")
 
     ####################################################### Ticker #######################################################
-    ## Set ticker value in session state to persist
+    ## Set ticker value in session state to persist. Default 'MSFT'
     if "ticker" not in st.session_state:
         st.session_state.ticker = "MSFT"
     else:
@@ -73,10 +78,16 @@ if __name__ == '__main__':
 
     ################################################# Company Description #################################################
     st.subheader("Description")
-    st.markdown(f"<p style='text-align:justify; word-break:keep-all'>{st.session_state.ticker_obj.info['longBusinessSummary']}</p>", unsafe_allow_html=True)
+    description_str = f"""
+    <p style='text-align:justify; word-break:keep-all'>
+        {st.session_state.ticker_obj.info['longBusinessSummary']}
+    </p>
+    """
+    st.markdown(description_str, unsafe_allow_html=True)
     #######################################################################################################################
 
     ################################################# Major Shareholders ##################################################
+    ## Distribution of shares
     st.subheader("Share Distribution")
     df = st.session_state.ticker_obj.major_holders
     s = df.style.set_properties(subset=[1], **{'font-weight': 'bold', 'text-align': 'right'})
@@ -84,6 +95,7 @@ if __name__ == '__main__':
     st.write(s.to_html(), unsafe_allow_html=True)
     st.markdown('')
 
+    ## List of Institutional Holders
     st.subheader("Institutional Holders")
     df = st.session_state.ticker_obj.institutional_holders
     s = df.style.set_properties(subset=['Holder', '% Out'], **{'font-weight': 'bold', 'text-align': 'right'})
@@ -91,6 +103,7 @@ if __name__ == '__main__':
     st.write(s.to_html(), unsafe_allow_html=True)
     st.markdown('')
 
+    ## List of Mutual Fund Holders
     st.subheader("Mutual Fund Holders")
     df = st.session_state.ticker_obj.mutualfund_holders
     s = df.style.set_properties(subset=['Holder', '% Out'], **{'font-weight': 'bold', 'text-align': 'right'})

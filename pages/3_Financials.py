@@ -1,9 +1,14 @@
-import streamlit as st
 import pandas as pd
+import streamlit as st
 import yfinance as yf
 
 
 def initialize_ticker_obj():
+    """
+    Store the yfinance ticker object for the selected ticker
+    in session state to reduce API hits and persist ticker
+    selection across pages
+    """
     st.session_state['ticker_obj'] = yf.Ticker(st.session_state.ticker)
 
 
@@ -12,7 +17,7 @@ if __name__=='__main__':
     st.set_page_config(layout="wide")
 
     ####################################################### Ticker #######################################################
-    ## Set ticker value in session state to persist
+    ## Set ticker value in session state to persist. Default 'MSFT'
     if "ticker" not in st.session_state:
         st.session_state.ticker = "MSFT"
     else:
@@ -37,30 +42,37 @@ if __name__=='__main__':
     st.header(st.session_state.ticker_obj.info['longName'])
     #######################################################################################################################
 
-
+    ################################################# Financial Information #################################################
     tab_IS, tab_BS, tab_CF = st.tabs(["Income Statement", "Balance Sheet", "Cash Flow"])
 
     ## Income Statement
     with tab_IS:
         tab_q, tab_y = st.tabs(["Quarterly", "Yearly"])
+        ## Quaterly
         with tab_q:
             st.table(st.session_state.ticker_obj.quarterly_financials)
+        ## Yearly
         with tab_y:
             st.table(st.session_state.ticker_obj.financials)
     
     ## Balance Sheet
     with tab_BS:
         tab_q, tab_y = st.tabs(["Quarterly", "Yearly"])
+        ## Quaterly
         with tab_q:
             st.table(st.session_state.ticker_obj.quarterly_balance_sheet)
+        ## Yearly
         with tab_y:
             st.table(st.session_state.ticker_obj.balance_sheet)
     
     ## Cash Flow
     with tab_CF:
         tab_q, tab_y = st.tabs(["Quarterly", "Yearly"])
+        ## Quaterly
         with tab_q:
             st.table(st.session_state.ticker_obj.quarterly_cashflow)
+        ## Yearly
         with tab_y:
             st.table(st.session_state.ticker_obj.cashflow)
+    #######################################################################################################################
         

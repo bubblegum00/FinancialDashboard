@@ -1,11 +1,18 @@
-import streamlit as st
 from datetime import datetime, timedelta
-import yfinance as yf
+
 import pandas as pd
+import streamlit as st
+import yfinance as yf
+
 from monte_carlo import MonteCarlo
 
 
 def initialize_ticker_obj():
+    """
+    Store the yfinance ticker object for the selected ticker
+    in session state to reduce API hits and persist ticker
+    selection across pages
+    """
     st.session_state['ticker_obj'] = yf.Ticker(st.session_state.ticker)
 
 
@@ -14,7 +21,7 @@ if __name__ == '__main__':
     st.set_page_config(layout="wide")
 
     ####################################################### Ticker #######################################################
-    ## Set ticker value in session state to persist
+    ## Set ticker value in session state to persist. Default 'MSFT'
     if "ticker" not in st.session_state:
         st.session_state.ticker = "MSFT"
     else:
@@ -46,7 +53,7 @@ if __name__ == '__main__':
     with col_start_date:
         start_date = st.date_input(label="Start date", 
                         value=datetime.today().date() - timedelta(days=365), max_value=datetime.today().date() - timedelta(days=60),
-                        help="Select how far back to look at actuals to initialize the algorithm. Default 1 year.")
+                        help="Select how far back to look at actuals to initialize the algorithm. Default 1 year")
 
     with col_nsim:
         nsim = st.selectbox(label="Number of Simulations", options=(250,500,1000), help="Number of monte carlo simulation to run")

@@ -1,5 +1,6 @@
 ## Import Modules
-from datetime import datetime,timedelta
+from datetime import datetime, timedelta
+
 import pandas as pd
 import plotly.express as px
 import streamlit as st
@@ -7,14 +8,24 @@ import yfinance as yf
 
 
 def initialize_ticker_obj():
+    """
+    Store the yfinance ticker object for the selected ticker
+    in session state to reduce API hits and persist ticker
+    selection across pages
+    """
     st.session_state['ticker_obj'] = yf.Ticker(st.session_state.ticker)
 
 
-def get_histoy(period, interval):
-    return st.session_state.ticker_obj.history(period, interval)
-
-
 def format_table(content):
+    """
+    Format the summary table for display
+    using pandas styler
+
+    Parameters
+    ----------
+    content: dict
+        The data to be shown as key-value pairs
+    """
     df = pd.Series(content).reset_index()
     s = df.style.set_properties(subset=[0], **{'font-weight': 'bold', 'text-align': 'right'})
     s = s.hide_index().hide_columns()
@@ -24,7 +35,12 @@ def format_table(content):
 def human_format(num):
     """
     Format number to human-readable string.
-    https://stackoverflow.com/questions/579310/formatting-long-numbers-as-strings/45846841#45846841
+    Ref: https://stackoverflow.com/questions/579310/formatting-long-numbers-as-strings/45846841#45846841
+
+    Parameters
+    ----------
+    num: int
+        The number to format
     """
     magnitude = 0
     while abs(num) >= 1000:
@@ -35,6 +51,14 @@ def human_format(num):
 
 
 def create_chart(data):
+    """
+    Creates line chart of closing price of stock data
+
+    Parameters
+    ----------
+    data: DataFrame
+        Historical closing price stored in field "Close"
+    """
     fig = px.area(data, x=data.index, y="Close")
     fig.update_traces(hovertemplate=None)
     fig.update_layout(hovermode="x")
@@ -47,7 +71,7 @@ def run():
     ## Page config
     st.set_page_config(layout="wide")
 
-    ####################################################### Ticker #######################################################
+    ############################################# Ticker #############################################
     ## Set ticker value in session state to persist
     if "ticker" not in st.session_state:
         st.session_state.ticker = "MSFT"
@@ -65,14 +89,26 @@ def run():
     ticker_list = pd.read_html('https://en.wikipedia.org/wiki/List_of_S%26P_500_companies')[0]['Symbol']
 
     # Add the ticker selection on the sidebar
-    st.sidebar.selectbox(label="Select a ticker", options=ticker_list,key='ticker', on_change=initialize_ticker_obj)
+    st.sidebar.selectbox(label="Select a ticker"
+                        , options=ticker_list,key='ticker'
+                        , on_change=initialize_ticker_obj)
     ##############################################################
-    #######################################################################################################################
+    ####################################################################################################
     
-    ## Title
-    st.markdown(f"<p style='font-size:50px; font-weight:bold; margin-bottom:-20px'>{st.session_state.ticker_obj.info['longName']} ({st.session_state.ticker})</p><span style='font-size:15px; color:grey'>Currency in {st.session_state.ticker_obj.info['currency']}</span>",unsafe_allow_html=True)
-    
-    ## Metric - Current Price andchange from last close
+    ############################################### Title ##############################################
+    title_str = f"""
+    <p style='font-size:50px; font-weight:bold; margin-bottom:-20px'>
+        {st.session_state.ticker_obj.info['longName']} ({st.session_state.ticker})
+    </p>
+    <span style='font-size:15px; color:grey'>
+        Currency in {st.session_state.ticker_obj.info['currency']}
+    </span>
+
+    """
+    st.markdown(title_str,unsafe_allow_html=True)
+    ####################################################################################################
+
+    ######################## Metric - Current Price and change from last close #########################
     st.markdown("""
     <style>
     [data-testid=stMetricLabel]{
@@ -80,10 +116,20 @@ def run():
     }
     </style>
     """,unsafe_allow_html=True)
-    st.metric(label="Current Price", value=st.session_state.ticker_obj.info['currentPrice'], delta=round(st.session_state.ticker_obj.info['currentPrice']-st.session_state.ticker_obj.info['previousClose'], 2))
+    st.metric(label="Current Price"
+                , value=st.session_state.ticker_obj.info['currentPrice']
+                , delta=round(st.session_state.ticker_obj.info['currentPrice']-st.session_state.ticker_obj.info['previousClose'], 2))
+    ####################################################################################################
 
+    ########################################## Summary Data ############################################
+    ## Summary Data:
+    ### 1. Previous Close, Open, Bid, Ask, Day's Range, 52 Week Range, Volume, Avg. Volume
+    ### 2. Market Cap, Beta(5Y Monthly), PE Ratio (TTM), EPS (TTM), Earnings Date, 
+    ###    Forward Dividend & Yield, Ex-Dividend Date, 1y target Est
+    ### 3. Chart for historical closing price
     col_info1, col_info2, col_chart = st.columns([1,1,2], gap="medium")
 
+    ######################## Data Column 1 ########################
     col_info1_content = {"Previous Close": st.session_state.ticker_obj.info['previousClose'],
         "Open": st.session_state.ticker_obj.info['open'],
         "Bid": f"{st.session_state.ticker_obj.info['bid']} x {st.session_state.ticker_obj.info['bidSize']}",
@@ -94,6 +140,11 @@ def run():
         "Average Volume": f"{st.session_state.ticker_obj.info['averageVolume']:,}"
     }
 
+    with col_info1:
+        st.write(format_table(col_info1_content), unsafe_allow_html=True)
+    ###############################################################
+    
+    ######################## Data Column 2 ########################
     col_info2_content = {
         "Market Cap": human_format(st.session_state.ticker_obj.info['marketCap']),
         "Beta": st.session_state.ticker_obj.info['beta'],
@@ -104,40 +155,47 @@ def run():
         "exDividendDate": pd.to_datetime(st.session_state.ticker_obj.info['exDividendDate'], unit='s', origin='unix').strftime("%b %d, %Y") if st.session_state.ticker_obj.info['exDividendDate'] else "N/A",
         "1y Target EST": st.session_state.ticker_obj.info['targetMeanPrice']
     }
-
-    ## Display table w/o index/column header - https://stackoverflow.com/questions/69875734/how-to-hide-dataframe-index-on-streamlit
-    with col_info1:
-        st.write(format_table(col_info1_content), unsafe_allow_html=True)
     with col_info2:
         st.write(format_table(col_info2_content), unsafe_allow_html=True)
-    with col_chart:
-        tab_1m, tab_6m, tab_ytd, tab_1y, tab_5y, tab_max = st.tabs(["1M", "6M", "YTD", "1Y", "5Y", "MAX"])
-        with tab_1m:
-            data = get_histoy(period="1mo", interval="1d")
-            fig = create_chart(data)
-            st.plotly_chart(fig, use_container_width=True)
-        with tab_6m:
-            data = get_histoy(period="6mo", interval="1d")
-            fig = create_chart(data)
-            st.plotly_chart(fig, use_container_width=True)
-        with tab_ytd:
-            data = get_histoy(period="ytd", interval="1d")
-            fig = create_chart(data)
-            st.plotly_chart(fig, use_container_width=True)
-        with tab_1y:
-            data = get_histoy(period="1y", interval="1d")
-            fig = create_chart(data)
-            st.plotly_chart(fig, use_container_width=True)
-        with tab_5y:
-            data = get_histoy(period="5y", interval="1d")
-            fig = create_chart(data)
-            st.plotly_chart(fig, use_container_width=True)
-        with tab_max:
-            data = get_histoy(period="max", interval="1d")
-            fig = create_chart(data)
-            st.plotly_chart(fig, use_container_width=True)
-        
+    ###############################################################
 
+    ######################## Chart Column ########################
+    with col_chart:
+        ## Multiple tabs show different period of historical
+        ## closing price data
+        tab_1m, tab_6m, tab_ytd, tab_1y, tab_5y, tab_max = st.tabs(["1M", "6M", "YTD", "1Y", "5Y", "MAX"])
+        ## 1 Month
+        with tab_1m:
+            data = st.session_state.ticker_obj.history(period="1mo", interval="1d")
+            fig = create_chart(data)
+            st.plotly_chart(fig, use_container_width=True)
+        ## 6 Month
+        with tab_6m:
+            data = st.session_state.ticker_obj.history(period="6mo", interval="1d")
+            fig = create_chart(data)
+            st.plotly_chart(fig, use_container_width=True)
+        ## Year to Date
+        with tab_ytd:
+            data = st.session_state.ticker_obj.history(period="ytd", interval="1d")
+            fig = create_chart(data)
+            st.plotly_chart(fig, use_container_width=True)
+        ## 1 Year
+        with tab_1y:
+            data = st.session_state.ticker_obj.history(period="1y", interval="1d")
+            fig = create_chart(data)
+            st.plotly_chart(fig, use_container_width=True)
+        ## 5 Year
+        with tab_5y:
+            data = st.session_state.ticker_obj.history(period="5y", interval="1d")
+            fig = create_chart(data)
+            st.plotly_chart(fig, use_container_width=True)
+        ## All available data
+        with tab_max:
+            data = st.session_state.ticker_obj.history(period="max", interval="1d")
+            fig = create_chart(data)
+            st.plotly_chart(fig, use_container_width=True)
+    ###############################################################  
+    ####################################################################################################
 
 if __name__ == '__main__':
     run()
