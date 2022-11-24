@@ -253,3 +253,12 @@ if __name__ == '__main__':
         ## Show visualization
         st.plotly_chart(fig, use_container_width=True)
     ####################################################################################################
+    
+    ############################################## Source ##############################################
+    source_str="""
+    <p style='font-size:15px; color:grey; text-align:right'>
+        Source: Yahoo Finance
+    </p>
+    """
+    st.markdown(source_str,unsafe_allow_html=True)
+    #####################################################################################################

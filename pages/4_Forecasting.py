@@ -80,3 +80,12 @@ if __name__ == '__main__':
     # Plot the results
     st.pyplot(mc_sim.plot_simulation_price(), clear_figure=True)
     #######################################################################################################################
+
+    ####################################################### Source ########################################################
+    source_str="""
+    <p style='font-size:15px; color:grey; text-align:right'>
+        Historical Data Source: Yahoo Finance
+    </p>
+    """
+    st.markdown(source_str,unsafe_allow_html=True)
+    #######################################################################################################################
