@@ -94,15 +94,22 @@ def run():
     ####################################################################################################
     
     ############################################### Title ##############################################
-    title_str = f"""
+    if st.session_state.ticker_obj.info.get('longName', None):
+        title_str= st.session_state.ticker_obj.info['longName']
+    elif st.session_state.ticker_obj.info.get('shortName', None):
+        title_str= st.session_state.ticker_obj.info['shortName']
+    else:
+        title_str= st.session_state.ticker_obj.info['symbol']
+    
+    title_styled = f"""
     <p style='font-size:50px; font-weight:bold; margin-bottom:-20px'>
-        {st.session_state.ticker_obj.info['longName']} ({st.session_state.ticker})
+        {title_str} ({st.session_state.ticker})
     </p>
     <span style='font-size:15px; color:grey'>
         Currency in {st.session_state.ticker_obj.info['currency']}
     </span>
     """
-    st.markdown(title_str,unsafe_allow_html=True)
+    st.markdown(title_styled,unsafe_allow_html=True)
     ####################################################################################################
 
     ######################## Metric - Current Price and change from last close #########################

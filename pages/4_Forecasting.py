@@ -43,7 +43,14 @@ if __name__ == '__main__':
     #######################################################################################################################
 
     ######################################################## Title ########################################################
-    st.header(st.session_state.ticker_obj.info['longName'])
+    if st.session_state.ticker_obj.info.get('longName', None):
+        title_str= st.session_state.ticker_obj.info['longName']
+    elif st.session_state.ticker_obj.info.get('shortName', None):
+        title_str= st.session_state.ticker_obj.info['shortName']
+    else:
+        title_str= st.session_state.ticker_obj.info['symbol']
+    st.header(title_str)
+    #st.header(st.session_state.ticker_obj.info['longName'])
     #######################################################################################################################
 
     ################################## Initialize Parameters of Monte Carlo Simulation ####################################
